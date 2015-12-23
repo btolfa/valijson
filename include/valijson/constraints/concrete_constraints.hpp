@@ -14,14 +14,14 @@
 #ifndef __VALIJSON_CONSTRAINTS_CONCRETE_CONSTRAINTS_HPP
 #define __VALIJSON_CONSTRAINTS_CONCRETE_CONSTRAINTS_HPP
 
+#include <boost/ptr_container/ptr_vector.hpp>
+#include <boost/variant.hpp>
+
 #include <limits>
+#include <map>
 #include <set>
 #include <string>
-
-#include <boost/ptr_container/ptr_map.hpp>
-#include <boost/ptr_container/ptr_vector.hpp>
-#include <boost/scoped_ptr.hpp>
-#include <boost/shared_ptr.hpp>
+#include <vector>
 
 #include <valijson/adapters/frozen_value.hpp>
 #include <valijson/constraints/basic_constraint.hpp>
@@ -42,7 +42,7 @@ namespace constraints {
  */
 struct AllOfConstraint: BasicConstraint<AllOfConstraint>
 {
-    typedef boost::ptr_vector<Schema> Schemas;
+    typedef std::vector<const Subschema *> Schemas;
 
     AllOfConstraint(const Schemas &schemas)
       : schemas(schemas) { }
@@ -60,7 +60,7 @@ struct AllOfConstraint: BasicConstraint<AllOfConstraint>
  */
 struct AnyOfConstraint: BasicConstraint<AnyOfConstraint>
 {
-    typedef boost::ptr_vector<Schema> Schemas;
+    typedef std::vector<const Subschema *> Schemas;
 
     AnyOfConstraint(const Schemas &schemas)
       : schemas(schemas) { }
@@ -82,7 +82,8 @@ struct DependenciesConstraint: BasicConstraint<DependenciesConstraint>
     typedef std::map<std::string, Dependencies> PropertyDependenciesMap;
 
     // A mapping from property names to dependent schemas
-    typedef boost::ptr_map<std::string, Schema> PropertyDependentSchemasMap;
+    typedef std::map<std::string, const Subschema *>
+            PropertyDependentSchemasMap;
 
     DependenciesConstraint(const PropertyDependenciesMap &dependencies,
                            const PropertyDependentSchemasMap &dependentSchemas)
@@ -115,7 +116,7 @@ struct EnumConstraint: BasicConstraint<EnumConstraint>
  */
 struct ItemsConstraint: BasicConstraint<ItemsConstraint>
 {
-    typedef boost::ptr_vector<Schema> Schemas;
+    typedef std::vector<const Subschema *> Schemas;
 
     /**
      * @brief  Construct a singular item constraint that allows no additional
@@ -123,8 +124,9 @@ struct ItemsConstraint: BasicConstraint<ItemsConstraint>
      *
      * @param  itemSchema
      */
-    ItemsConstraint(const Schema &itemSchema)
-      : itemSchema(new Schema(itemSchema)) { }
+    ItemsConstraint(const Subschema *itemSchema)
+      : itemSchema(itemSchema),
+        additionalItemsSchema(NULL) { }
 
     /**
      * @brief  Construct a singular item schema that allows additional items
@@ -132,10 +134,10 @@ struct ItemsConstraint: BasicConstraint<ItemsConstraint>
      * @param  itemSchema
      * @param  additionalItemsSchema
      */
-    ItemsConstraint(const Schema &itemSchema,
-                    const Schema &additionalItemsSchema)
-      : itemSchema(new Schema(itemSchema)),
-        additionalItemsSchema(new Schema(additionalItemsSchema)) { }
+    ItemsConstraint(const Subschema *itemSchema,
+                    const Subschema *additionalItemsSchema)
+      : itemSchema(itemSchema),
+        additionalItemsSchema(additionalItemsSchema) { }
 
     /**
      * @brief  Construct a plural items constraint that does not allow for
@@ -144,7 +146,9 @@ struct ItemsConstraint: BasicConstraint<ItemsConstraint>
      * @param  itemSchemas  collection of item schemas
      */
     ItemsConstraint(const Schemas &itemSchemas)
-      : itemSchemas(new Schemas(itemSchemas)) { }
+      : itemSchema(NULL),
+        itemSchemas(itemSchemas),
+        additionalItemsSchema(NULL) { }
 
     /**
      * @brief  Construct a plural items constraint that allows additional items
@@ -153,21 +157,22 @@ struct ItemsConstraint: BasicConstraint<ItemsConstraint>
      * @param  additionalItemsSchema
      */
     ItemsConstraint(const Schemas &itemSchemas,
-                    const Schema &additionalItemsSchema)
-      : itemSchemas(new Schemas(itemSchemas)),
-        additionalItemsSchema(new Schema(additionalItemsSchema)) { }
+                    const Subschema *additionalItemsSchema)
+      : itemSchema(NULL),
+        itemSchemas(itemSchemas),
+        additionalItemsSchema(additionalItemsSchema) { }
 
     /**
      * @brief  Copy constructor
      */
     ItemsConstraint(const ItemsConstraint &other)
-      : itemSchema(other.itemSchema ? new Schema(*other.itemSchema.get()) : NULL),
-        itemSchemas(other.itemSchemas ? new Schemas(*other.itemSchemas.get()) : NULL),
-        additionalItemsSchema(other.additionalItemsSchema ? new Schema(*other.additionalItemsSchema.get()) : NULL) { }
+      : itemSchema(other.itemSchema),
+        itemSchemas(other.itemSchemas),
+        additionalItemsSchema(other.additionalItemsSchema) { }
 
-    const boost::scoped_ptr<const Schema> itemSchema;
-    const boost::scoped_ptr<const Schemas> itemSchemas;
-    const boost::scoped_ptr<const Schema> additionalItemsSchema;
+    const Subschema* itemSchema;
+    const Schemas itemSchemas;
+    const Subschema* additionalItemsSchema;
 };
 
 /**
@@ -263,25 +268,17 @@ struct MinPropertiesConstraint: BasicConstraint<MinPropertiesConstraint>
 };
 
 /**
- * @brief  Represents a 'multipleOf' or 'divisibleBy' constraint for decimals
+ * @brief  Represents a 'multipleOf' or 'divisibleBy' constraint
  */
-struct MultipleOfDecimalConstraint: BasicConstraint<MultipleOfDecimalConstraint>
+struct MultipleOfConstraint: BasicConstraint<MultipleOfConstraint>
 {
-    MultipleOfDecimalConstraint(double multipleOf)
-      : multipleOf(multipleOf) { }
+    explicit MultipleOfConstraint(int64_t value)
+      : value(value) { }
 
-    const double multipleOf;
-};
+    explicit MultipleOfConstraint(double value)
+      : value(value) { }
 
-/**
- * @brief  Represents a 'multipleOf' or 'divisibleBy' constraint for int64_t
- */
-struct MultipleOfIntegerConstraint: BasicConstraint<MultipleOfIntegerConstraint>
-{
-    MultipleOfIntegerConstraint(int64_t multipleOf)
-      : multipleOf(multipleOf) { }
-
-    const int64_t multipleOf;
+    const boost::variant<double, int64_t> value;
 };
 
 /**
@@ -289,13 +286,13 @@ struct MultipleOfIntegerConstraint: BasicConstraint<MultipleOfIntegerConstraint>
  */
 struct NotConstraint: BasicConstraint<NotConstraint>
 {
-    NotConstraint(const Schema &schema)
-      : schema(new Schema(schema)) { }
+    NotConstraint(const Subschema *schema)
+      : schema(schema) { }
 
     NotConstraint(const NotConstraint &other)
-      : schema(other.schema ? new Schema(*other.schema) : NULL) { }
+      : schema(other.schema) { }
 
-    const boost::scoped_ptr<const Schema> schema;
+    const Subschema *schema;
 };
 
 /**
@@ -303,7 +300,7 @@ struct NotConstraint: BasicConstraint<NotConstraint>
  */
 struct OneOfConstraint: BasicConstraint<OneOfConstraint>
 {
-    typedef boost::ptr_vector<Schema> Schemas;
+    typedef std::vector<const Subschema *> Schemas;
 
     OneOfConstraint(const Schemas &schemas)
       : schemas(schemas) { }
@@ -329,29 +326,33 @@ struct PatternConstraint: BasicConstraint<PatternConstraint>
  */
 struct PropertiesConstraint: BasicConstraint<PropertiesConstraint> {
 
-    typedef boost::ptr_map<std::string, Schema> PropertySchemaMap;
+    typedef std::map<std::string, const Subschema *> PropertySchemaMap;
+
+    PropertiesConstraint(const PropertySchemaMap &properties)
+      : properties(properties),
+        additionalProperties(NULL) { }
 
     PropertiesConstraint(const PropertySchemaMap &properties,
                          const PropertySchemaMap &patternProperties)
       : properties(properties),
-        patternProperties(patternProperties) { }
+        patternProperties(patternProperties),
+        additionalProperties(NULL) { }
 
     PropertiesConstraint(const PropertySchemaMap &properties,
                          const PropertySchemaMap &patternProperties,
-                         const Schema &additionalProperties)
+                         const Subschema *additionalProperties)
       : properties(properties),
         patternProperties(patternProperties),
-        additionalProperties(new Schema(additionalProperties)) { }
+        additionalProperties(additionalProperties) { }
 
     PropertiesConstraint(const PropertiesConstraint &other)
       : properties(other.properties),
         patternProperties(other.patternProperties),
-        additionalProperties(other.additionalProperties ?
-                 new Schema(*other.additionalProperties.get()) : NULL) {}
+        additionalProperties(other.additionalProperties) {}
 
     const PropertySchemaMap properties;
     const PropertySchemaMap patternProperties;
-    const boost::scoped_ptr<const Schema> additionalProperties;
+    const Subschema *additionalProperties;
 
 };
 
@@ -389,15 +390,15 @@ struct TypeConstraint: BasicConstraint<TypeConstraint>
 
     typedef std::set<JsonType> JsonTypes;
 
-    typedef boost::ptr_vector<Schema> Schemas;
+    typedef std::vector<const Subschema *> Schemas;
 
     TypeConstraint(const JsonType jsonType)
       : jsonTypes(makeJsonTypes(jsonType)) { }
 
-    TypeConstraint(const JsonTypes jsonTypes)
+    TypeConstraint(const JsonTypes &jsonTypes)
       : jsonTypes(jsonTypes) { }
 
-    TypeConstraint(const JsonTypes jsonTypes,
+    TypeConstraint(const JsonTypes &jsonTypes,
                    const Schemas &schemas)
       : jsonTypes(jsonTypes),
         schemas(schemas) { }

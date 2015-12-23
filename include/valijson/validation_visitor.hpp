@@ -5,6 +5,7 @@
 
 #include <boost/lexical_cast.hpp>
 #include <boost/regex.hpp>
+#include <boost/variant/get.hpp>
 
 #include <valijson/constraints/concrete_constraints.hpp>
 #include <valijson/constraints/constraint_visitor.hpp>
@@ -63,18 +64,18 @@ public:
      *
      * @return  true if validation passes, false otherwise
      */
-    bool validateSchema(const Schema &schema)
+    bool validateSchema(const Subschema &subschema)
     {
         // Wrap the validationCallback() function below so that it will be
         // passed a reference to a constraint (_1), and a reference to the
         // visitor (*this).
-        Schema::ApplyFunction fn(boost::bind(validationCallback, _1, *this));
+        Subschema::ApplyFunction fn(boost::bind(validationCallback, _1, *this));
 
         // Perform validation against each constraint defined in the schema
         if (results == NULL) {
             // The applyStrict() function will return immediately if the
             // callback function returns false
-            if (!schema.applyStrict(fn)) {
+            if (!subschema.applyStrict(fn)) {
                 return false;
             }
         } else {
@@ -82,7 +83,7 @@ public:
             // schema, even if the callback function returns false. Once
             // iteration is complete, the apply() function will return true
             // only if all invokations of the callback function returned true.
-            if (!schema.apply(fn)) {
+            if (!subschema.apply(fn)) {
                 return false;
             }
         }
@@ -115,10 +116,10 @@ public:
 
         // Validate against each child schema
         unsigned int index = 0;
-        BOOST_FOREACH( const Schema &schema, constraint.schemas ) {
+        BOOST_FOREACH( const Subschema *subschema, constraint.schemas ) {
 
             // Ensure that the target validates against child schema
-            if (!validateSchema(schema)) {
+            if (!validateSchema(*subschema)) {
                 if (results) {
                     validated = false;
                     results->pushError(context,
@@ -160,8 +161,8 @@ public:
         // visitor (*this).
         Schema::ApplyFunction fn(boost::bind(validationCallback, _1, *this));
 
-        BOOST_FOREACH( const Schema &schema, constraint.schemas ) {
-            if (schema.apply(fn)) {
+        BOOST_FOREACH( const Subschema *subschema, constraint.schemas ) {
+            if (subschema->apply(fn)) {
                 return true;
             }
         }
@@ -230,8 +231,8 @@ public:
             // dependent schema.
             PDSM::const_iterator depSchemasItr = depSchemas.find(m.first);
             if (depSchemasItr != depSchemas.end()) {
-                const Schema *schema = depSchemasItr->second;
-                if (!validateSchema(*schema)) {
+                const Subschema *subschema = depSchemasItr->second;
+                if (!validateSchema(*subschema)) {
                     if (results) {
                         results->pushError(context, "Failed to validate against dependent schema.");
                         validated = false;
@@ -325,14 +326,14 @@ public:
                 ++index;
             }
 
-        } else if (constraint.itemSchemas) {
+        } else if (!constraint.itemSchemas.empty()) {
 
             // Get access to the target as an object
             const typename AdapterType::Array arr = target.asArray();
 
             if (!constraint.additionalItemsSchema) {
                 // Check that the array length is <= length of the itemsSchema list
-                if (arr.size() > constraint.itemSchemas->size()) {
+                if (arr.size() > constraint.itemSchemas.size()) {
                     if (results) {
                         results->pushError(context, "Array contains more items than allowed by items constraint.");
                         validated = false;
@@ -350,7 +351,7 @@ public:
                 newContext.push_back("[" + boost::lexical_cast<std::string>(index) + "]");
                 ValidationVisitor<AdapterType> v(arrayItem,
                     newContext, strictTypes, results);
-                if (index >= constraint.itemSchemas->size()) {
+                if (index >= constraint.itemSchemas.size()) {
                     if (constraint.additionalItemsSchema) {
                         if (!v.validateSchema(*constraint.additionalItemsSchema)) {
                             if (results) {
@@ -366,7 +367,7 @@ public:
                             boost::lexical_cast<std::string>(index) + " in array due to missing schema.");
                         validated = false;
                     }
-                } else if (!v.validateSchema(constraint.itemSchemas->at(index))) {
+                } else if (!v.validateSchema(*constraint.itemSchemas.at(index))) {
                     if (results) {
                         results->pushError(context, "Failed to validate item #" +
                             boost::lexical_cast<std::string>(index) + " against corresponding item schema.");
@@ -652,106 +653,99 @@ public:
 
     /**
      * @brief   Validate against the multipleOf or divisibleBy constraints
-     *          represented by a MultipleOfDecimalConstraint object.
+     *          represented by a MultipleOfConstraint object.
      *
      * @param   constraint  Constraint that the target must validate against.
      *
      * @return  true if the constraint is satisfied, false otherwise.
      */
-    virtual bool visit(const MultipleOfDecimalConstraint &constraint)
+    virtual bool visit(const MultipleOfConstraint &constraint)
     {
-        double d = 0.;
-
-        if (target.maybeDouble()) {
-            if (!target.asDouble(d)) {
-                if (results) {
-                    results->pushError(context, "Value could not be converted "
-                        "to a number to check if it is a multiple of " +
-                        boost::lexical_cast<std::string>(
-                                constraint.multipleOf));
-                }
-                return false;
-            }
-        } else if (target.maybeInteger()) {
+        const int64_t *multipleOfInteger = boost::get<int64_t>(&constraint.value);
+        if (multipleOfInteger) {
             int64_t i = 0;
-            if (!target.asInteger(i)) {
+            if (target.maybeInteger()) {
+                if (!target.asInteger(i)) {
+                    if (results) {
+                        results->pushError(context, "Value could not be converted "
+                            "to an integer for multipleOf check");
+                    }
+                    return false;
+                }
+            } else if (target.maybeDouble()) {
+                double d;
+                if (!target.asDouble(d)) {
+                    if (results) {
+                        results->pushError(context, "Value could not be converted "
+                            "to a double for multipleOf check");
+                    }
+                    return false;
+                }
+                i = static_cast<int64_t>(d);
+            } else {
+                return true;
+            }
+
+            if (i == 0) {
+                return true;
+            }
+
+            if (i % *multipleOfInteger != 0) {
                 if (results) {
-                    results->pushError(context, "Value could not be converted "
-                        "to a number to check if it is a multiple of " +
-                        boost::lexical_cast<std::string>(
-                                constraint.multipleOf));
+                    results->pushError(context, "Value should be a multiple of " +
+                        boost::lexical_cast<std::string>(*multipleOfInteger));
                 }
                 return false;
             }
-            d = static_cast<double>(i);
-        } else {
+
             return true;
         }
 
-        if (d == 0) {
-            return true;
-        }
-
-        const double r = remainder(d, constraint.multipleOf);
-
-        if (fabs(r) > std::numeric_limits<double>::epsilon()) {
-            if (results) {
-                results->pushError(context, "Value should be a multiple of " +
-                    boost::lexical_cast<std::string>(constraint.multipleOf));
+        const double *multipleOfDouble = boost::get<double>(&constraint.value);
+        if (multipleOfDouble) {
+            double d = 0.;
+            if (target.maybeDouble()) {
+                if (!target.asDouble(d)) {
+                    if (results) {
+                        results->pushError(context, "Value could not be converted "
+                            "to a number to check if it is a multiple of " +
+                            boost::lexical_cast<std::string>(*multipleOfDouble));
+                    }
+                    return false;
+                }
+            } else if (target.maybeInteger()) {
+                int64_t i = 0;
+                if (!target.asInteger(i)) {
+                    if (results) {
+                        results->pushError(context, "Value could not be converted "
+                            "to a number to check if it is a multiple of " +
+                            boost::lexical_cast<std::string>(*multipleOfDouble));
+                    }
+                    return false;
+                }
+                d = static_cast<double>(i);
+            } else {
+                return true;
             }
-            return false;
-        }
 
-        return true;
-    }
+            if (d == 0) {
+                return true;
+            }
 
-    /**
-     * @brief   Validate against the multipleOf or divisibleBy constraints
-     *          represented by a MultipleOfIntegerConstraint object.
-     *
-     * @param   constraint  Constraint that the target must validate against.
-     *
-     * @return  true if the constraint is satisfied, false otherwise.
-     */
-    virtual bool visit(const MultipleOfIntegerConstraint &constraint)
-    {
-        int64_t i = 0;
+            const double r = remainder(d, *multipleOfDouble);
 
-        if (target.maybeInteger()) {
-            if (!target.asInteger(i)) {
+            if (fabs(r) > std::numeric_limits<double>::epsilon()) {
                 if (results) {
-                    results->pushError(context, "Value could not be converted "
-                        "to an integer for multipleOf check");
+                    results->pushError(context, "Value should be a multiple of " +
+                        boost::lexical_cast<std::string>(*multipleOfDouble));
                 }
                 return false;
             }
-        } else if (target.maybeDouble()) {
-            double d;
-            if (!target.asDouble(d)) {
-                if (results) {
-                    results->pushError(context, "Value could not be converted "
-                        "to a double for multipleOf check");
-                }
-                return false;
-            }
-            i = static_cast<int64_t>(d);
-        } else {
+
             return true;
         }
 
-        if (i == 0) {
-            return true;
-        }
-
-        if (i % constraint.multipleOf != 0) {
-            if (results) {
-                results->pushError(context, "Value should be a multiple of " +
-                    boost::lexical_cast<std::string>(constraint.multipleOf));
-            }
-            return false;
-        }
-
-        return true;
+        return false;
     }
 
     /**
@@ -790,9 +784,9 @@ public:
         ValidationResults newResults;
         ValidationResults *childResults = (results) ? &newResults : NULL;
 
-        BOOST_FOREACH( const Schema &schema, constraint.schemas ) {
+        BOOST_FOREACH( const Subschema *subschema, constraint.schemas ) {
             ValidationVisitor<AdapterType> v(target, context, strictTypes, childResults);
-            if (v.validateSchema(schema)) {
+            if (v.validateSchema(*subschema)) {
                 numValidated++;
             }
         }
@@ -1032,8 +1026,8 @@ public:
             }
         }
 
-        BOOST_FOREACH( const Schema &schema, constraint.schemas ) {
-            if (validateSchema(schema)) {
+        BOOST_FOREACH( const Subschema *subschema, constraint.schemas ) {
+            if (validateSchema(*subschema)) {
                 return true;
             }
         }
