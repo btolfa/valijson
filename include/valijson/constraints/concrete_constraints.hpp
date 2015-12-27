@@ -80,14 +80,14 @@ class DependenciesConstraint: public BasicConstraint<DependenciesConstraint>
 {
 public:
     DependenciesConstraint()
-      : propertyDependencies(allocator),
-        schemaDependencies(allocator)
+      : propertyDependencies(std::less<String>(), allocator),
+        schemaDependencies(std::less<String>(), allocator)
     { }
 
     DependenciesConstraint(CustomAlloc allocFn, CustomFree freeFn)
       : BasicConstraint(allocFn, freeFn),
-        propertyDependencies(allocator),
-        schemaDependencies(allocator)
+        propertyDependencies(std::less<String>(), allocator),
+        schemaDependencies(std::less<String>(), allocator)
     { }
 
     template<typename StringType>
@@ -99,7 +99,7 @@ public:
         PropertyDependencies::iterator itr = propertyDependencies.find(key);
         if (itr == propertyDependencies.end()) {
             itr = propertyDependencies.insert(PropertyDependencies::value_type(
-                    key, PropertySet(allocator))).first;
+                    key, PropertySet(std::less<String>(), allocator))).first;
         }
 
         itr->second.insert(String(dependencyName.c_str(), allocator));
@@ -116,7 +116,7 @@ public:
         PropertyDependencies::iterator itr = propertyDependencies.find(key);
         if (itr == propertyDependencies.end()) {
             itr = propertyDependencies.insert(PropertyDependencies::value_type(
-                    key, PropertySet(allocator))).first;
+                    key, PropertySet(std::less<String>(), allocator))).first;
         }
 
         typedef typename ContainerType::value_type ValueType;
