@@ -4,8 +4,6 @@
 namespace valijson {
 namespace constraints {
 
-struct AllOfConstraint;
-struct AnyOfConstraint;
 struct EnumConstraint;
 struct ItemsConstraint;
 struct FormatConstraint;
@@ -19,14 +17,16 @@ struct MinLengthConstraint;
 struct MinPropertiesConstraint;
 struct MultipleOfConstraint;
 struct NotConstraint;
-struct OneOfConstraint;
 struct PatternConstraint;
 struct PropertiesConstraint;
 struct RequiredConstraint;
 struct TypeConstraint;
 struct UniqueItemsConstraint;
 
+class AllOfConstraint;
+class AnyOfConstraint;
 class DependenciesConstraint;
+class OneOfConstraint;
 
 /// Interface to allow usage of the visitor pattern with Constraints
 class ConstraintVisitor
