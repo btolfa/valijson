@@ -1214,7 +1214,9 @@ private:
     constraints::PatternConstraint makePatternConstraint(
         const AdapterType &node)
     {
-        return constraints::PatternConstraint(node.getString());
+        constraints::PatternConstraint constraint;
+        constraint.setPattern(node.getString());
+        return constraint;
     }
 
     /**
