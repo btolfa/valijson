@@ -19,7 +19,6 @@ struct NotConstraint;
 struct PatternConstraint;
 struct PropertiesConstraint;
 struct RequiredConstraint;
-struct TypeConstraint;
 struct UniqueItemsConstraint;
 
 class AllOfConstraint;
@@ -28,6 +27,7 @@ class DependenciesConstraint;
 class LinearItemsConstraint;
 class OneOfConstraint;
 class SingularItemsConstraint;
+class TypeConstraint;
 
 /// Interface to allow usage of the visitor pattern with Constraints
 class ConstraintVisitor
