@@ -285,7 +285,7 @@ public:
                 }
             }
 
-            constraint.applyToItemSubschemas(ValidateItems(arr, context,
+            constraint.applyToItemSubschemas(ValidateItems(arr, context, true,
                     results != NULL, strictTypes, results, &numValidated,
                     &validated));
 
@@ -987,8 +987,8 @@ public:
         {
             // ValidateNamedTypes functor assumes target is invalid
             bool validated = false;
-            constraint.applyToNamedTypes(ValidateNamedTypes(target, strictTypes,
-                    false, true, &validated));
+            constraint.applyToNamedTypes(ValidateNamedTypes(target, false,
+                    true, strictTypes, &validated));
             if (validated) {
                 return true;
             }
@@ -1213,6 +1213,7 @@ private:
         ValidateItems(
                 const typename AdapterType::Array &arr,
                 const std::vector<std::string> &context,
+                bool continueOnSuccess,
                 bool continueOnFailure,
                 bool strictTypes,
                 ValidationResults *results,
@@ -1220,6 +1221,7 @@ private:
                 bool *validated)
           : arr(arr),
             context(context),
+            continueOnSuccess(continueOnSuccess),
             continueOnFailure(continueOnFailure),
             strictTypes(strictTypes),
             results(results),
@@ -1249,7 +1251,7 @@ private:
                     (*numValidated)++;
                 }
 
-                return true;
+                return continueOnSuccess;
             }
 
             if (validated) {
@@ -1269,6 +1271,7 @@ private:
     private:
         const typename AdapterType::Array &arr;
         const std::vector<std::string> &context;
+        bool continueOnSuccess;
         bool continueOnFailure;
         bool strictTypes;
         ValidationResults * const results;
@@ -1284,14 +1287,14 @@ private:
     {
         ValidateNamedTypes(
                 const AdapterType &target,
-                bool strict,
                 bool continueOnSuccess,
                 bool continueOnFailure,
+                bool strictTypes,
                 bool *validated)
           : target(target),
-            strict(strict),
             continueOnSuccess(continueOnSuccess),
             continueOnFailure(continueOnFailure),
+            strictTypes(strictTypes),
             validated(validated) { }
 
         bool operator()(constraints::TypeConstraint::JsonType jsonType) const
@@ -1308,17 +1311,19 @@ private:
                 valid = target.isArray();
                 break;
             case TypeConstraint::kBoolean:
-                valid = target.isBool() || (!strict && target.maybeBool());
+                valid = target.isBool() || (!strictTypes && target.maybeBool());
                 break;
             case TypeConstraint::kInteger:
                 valid = target.isInteger() ||
-                        (!strict && target.maybeInteger());
+                        (!strictTypes && target.maybeInteger());
                 break;
             case TypeConstraint::kNull:
-                valid = target.isNull() || (!strict && target.maybeNull());
+                valid = target.isNull() ||
+                        (!strictTypes && target.maybeNull());
                 break;
             case TypeConstraint::kNumber:
-                valid = target.isNumber() || (!strict && target.maybeDouble());
+                valid = target.isNumber() ||
+                        (!strictTypes && target.maybeDouble());
                 break;
             case TypeConstraint::kObject:
                 valid = target.isObject();
@@ -1339,9 +1344,9 @@ private:
 
     private:
         const AdapterType target;
-        const bool strict;
         const bool continueOnSuccess;
         const bool continueOnFailure;
+        const bool strictTypes;
         bool * const validated;
     };
 
