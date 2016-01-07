@@ -16,7 +16,6 @@ struct MinLengthConstraint;
 struct MinPropertiesConstraint;
 struct MultipleOfConstraint;
 struct PatternConstraint;
-struct PropertiesConstraint;
 
 class AllOfConstraint;
 class AnyOfConstraint;
@@ -25,6 +24,7 @@ class EnumConstraint;
 class LinearItemsConstraint;
 class NotConstraint;
 class OneOfConstraint;
+class PropertiesConstraint;
 class RequiredConstraint;
 class SingularItemsConstraint;
 class TypeConstraint;
