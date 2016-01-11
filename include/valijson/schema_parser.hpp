@@ -958,9 +958,11 @@ private:
         const AdapterType &node)
     {
         if (node.maybeInteger()) {
-            int64_t value = node.asInteger();
+            const int64_t value = node.asInteger();
             if (value >= 0) {
-                return constraints::MaxLengthConstraint(value);
+                constraints::MaxLengthConstraint constraint;
+                constraint.setMaxLength(value);
+                return constraint;
             }
         }
 
@@ -1069,14 +1071,16 @@ private:
         const AdapterType &node)
     {
         if (node.maybeInteger()) {
-            int64_t value = node.asInteger();
+            const int64_t value = node.asInteger();
             if (value >= 0) {
-                return constraints::MinLengthConstraint(value);
+                constraints::MinLengthConstraint constraint;
+                constraint.setMinLength(value);
+                return constraint;
             }
         }
 
         throw std::runtime_error(
-                "Expected a positive integer value for 'minLength' "
+                "Expected a non-negative integer value for 'minLength' "
                 "constraint.");
     }
 
