@@ -7,7 +7,6 @@ namespace constraints {
 struct FormatConstraint;
 struct MaxPropertiesConstraint;
 struct MinPropertiesConstraint;
-struct MultipleOfConstraint;
 
 class AllOfConstraint;
 class AnyOfConstraint;
@@ -20,6 +19,8 @@ class MaxLengthConstraint;
 class MinItemsConstraint;
 class MinimumConstraint;
 class MinLengthConstraint;
+class MultipleOfDoubleConstraint;
+class MultipleOfIntConstraint;
 class NotConstraint;
 class OneOfConstraint;
 class PatternConstraint;
@@ -48,7 +49,8 @@ protected:
     typedef constraints::MinItemsConstraint MinItemsConstraint;
     typedef constraints::MinLengthConstraint MinLengthConstraint;
     typedef constraints::MinPropertiesConstraint MinPropertiesConstraint;
-    typedef constraints::MultipleOfConstraint MultipleOfConstraint;
+    typedef constraints::MultipleOfDoubleConstraint MultipleOfDoubleConstraint;
+    typedef constraints::MultipleOfIntConstraint MultipleOfIntConstraint;
     typedef constraints::NotConstraint NotConstraint;
     typedef constraints::OneOfConstraint OneOfConstraint;
     typedef constraints::PatternConstraint PatternConstraint;
@@ -73,7 +75,8 @@ public:
     virtual bool visit(const MinItemsConstraint &) = 0;
     virtual bool visit(const MinLengthConstraint &) = 0;
     virtual bool visit(const MinPropertiesConstraint &) = 0;
-    virtual bool visit(const MultipleOfConstraint &) = 0;
+    virtual bool visit(const MultipleOfDoubleConstraint &) = 0;
+    virtual bool visit(const MultipleOfIntConstraint &) = 0;
     virtual bool visit(const NotConstraint &) = 0;
     virtual bool visit(const OneOfConstraint &) = 0;
     virtual bool visit(const PatternConstraint &) = 0;
