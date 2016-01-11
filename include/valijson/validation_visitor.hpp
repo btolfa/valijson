@@ -19,7 +19,7 @@ class ValidationResults;
 
 /**
  * @brief   Implementation of the ConstraintVisitor interface that validates a
- *          target document.
+ *          target document
  *
  * @tparam  AdapterType  Adapter type for the target document.
  */
@@ -92,7 +92,7 @@ public:
     }
 
     /**
-     * @brief  Validate the target against an allOf constraint.
+     * @brief  Validate a value against an AllOfConstraint
      *
      * An allOf constraint provides a set of child schemas against which the
      * target must be validated in order for the constraint to the satifisfied.
@@ -107,7 +107,7 @@ public:
      *
      * @param  constraint  Constraint that the target must validate against
      *
-     * @return  true if validation passes, false otherwise
+     * @return  \c true if validation passes; \c false otherwise
      */
     virtual bool visit(const AllOfConstraint &constraint)
     {
@@ -120,8 +120,7 @@ public:
     }
 
     /**
-     * @brief   Validate against the anyOf constraint represented by an
-     *          AnyOfConstraint object.
+     * @brief   Validate a value against an AnyOfConstraint
      *
      * An anyOf constraint provides a set of child schemas, any of which the
      * target may be validated against in order for the constraint to the
@@ -133,9 +132,9 @@ public:
      * validation fails for all child schemas will an error be added to the
      * ValidationResults object.
      *
-     * @param   constraint  Constraint that the target must validate against.
+     * @param   constraint  Constraint that the target must validate against
      *
-     * @return  true if validation passes, false otherwise.
+     * @return  \c true if validation passes; \c false otherwise
      */
     virtual bool visit(const AnyOfConstraint &constraint)
     {
@@ -439,12 +438,11 @@ public:
     }
 
     /**
-     * @brief   Validate against the maxProperties constraint represented by a
-     *          MaxPropertiesConstraint object.
+     * @brief   Validate a value against a MaxPropertiesConstraint
      *
-     * @param   constraint  Constraint that the target must validate against.
+     * @param   constraint  Constraint that the target must validate against
      *
-     * @return  true if the constraint is satisfied, false otherwise.
+     * @return  \c true if the constraint is satisfied; \c false otherwise
      */
     virtual bool visit(const MaxPropertiesConstraint &constraint)
     {
@@ -561,12 +559,11 @@ public:
     }
 
     /**
-     * @brief   Validate against the minProperties constraint represented by a
-     *          MinPropertiesConstraint object.
+     * @brief   Validate a value against a MinPropertiesConstraint
      *
-     * @param   constraint  Constraint that the target must validate against.
+     * @param   constraint  Constraint that the target must validate against
      *
-     * @return  true if the constraint is satisfied, false otherwise.
+     * @return  \c true if the constraint is satisfied; \c false otherwise
      */
     virtual bool visit(const MinPropertiesConstraint &constraint)
     {
@@ -724,12 +721,11 @@ public:
     }
 
     /**
-     * @brief   Validate against the oneOf constraint represented by a
-     *          OneOfConstraint object.
+     * @brief   Validate a value against a OneOfConstraint
      *
-     * @param   constraint  Constraint that the target must validate against.
+     * @param   constraint  Constraint that the target must validate against
      *
-     * @return  true if the constraint is satisfied, false otherwise.
+     * @return  \c true if the constraint is satisfied; \c false otherwise
      */
     virtual bool visit(const OneOfConstraint &constraint)
     {
@@ -745,14 +741,18 @@ public:
             if (results) {
                 ValidationResults::Error childError;
                 while (childResults->popError(childError)) {
-                    results->pushError(childError.context, childError.description);
+                    results->pushError(
+                            childError.context,
+                            childError.description);
                 }
-                results->pushError(context, "Failed to validate against any child schemas allowed by oneOf constraint.");
+                results->pushError(context, "Failed to validate against any "
+                        "child schemas allowed by oneOf constraint.");
             }
             return false;
         } else if (numValidated != 1) {
             if (results) {
-                results->pushError(context, "Failed to validate against exactly one child schema.");
+                results->pushError(context,
+                        "Failed to validate against exactly one child schema.");
             }
             return false;
         }
@@ -761,12 +761,11 @@ public:
     }
 
     /**
-     * @brief   Validate against the pattern constraint represented by a
-     *          PatternConstraint object.
+     * @brief   Validate a value against a PatternConstraint
      *
-     * @param   constraint  Constraint that the target must validate against.
+     * @param   constraint  Constraint that the target must validate against
      *
-     * @return  true if the constraint is satisfied, false otherwise.
+     * @return  \c true if the constraint is satisfied; \c false otherwise
      */
     virtual bool visit(const PatternConstraint &constraint)
     {
@@ -877,15 +876,14 @@ public:
     }
 
     /**
-     * @brief   Validate against the required constraint represented by a
-     *          RequiredConstraint object.
+     * @brief   Validate a value against a RequiredConstraint
      *
      * A required constraint specifies a list of properties that must be present
      * in the target.
      *
      * @param   constraint  Constraint that the target must validate against
      *
-     * @return  true if validation succeeds, false otherwise
+     * @return  \c true if validation succeeds; \c false otherwise
      */
     virtual bool visit(const RequiredConstraint &constraint)
     {
