@@ -1007,7 +1007,9 @@ private:
         if (node.maybeInteger()) {
             int64_t value = node.asInteger();
             if (value >= 0) {
-                return constraints::MaxPropertiesConstraint(value);
+                constraints::MaxPropertiesConstraint constraint;
+                constraint.setMaxProperties(value);
+                return constraint;
             }
         }
 
@@ -1122,7 +1124,9 @@ private:
         if (node.maybeInteger()) {
             int64_t value = node.asInteger();
             if (value >= 0) {
-                return constraints::MinPropertiesConstraint(value);
+                constraints::MinPropertiesConstraint constraint;
+                constraint.setMinProperties(value);
+                return constraint;
             }
         }
 
