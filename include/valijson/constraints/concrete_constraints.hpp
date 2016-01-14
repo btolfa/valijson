@@ -435,6 +435,11 @@ public:
 
     void setMaxItems(int64_t newMaxItems)
     {
+        if (newMaxItems < 0) {
+            throw std::runtime_error(
+                    "Maximum number of items must be a non-negative integer");
+        }
+
         maxItems = newMaxItems;
     }
 
@@ -462,6 +467,11 @@ public:
 
     void setMaxLength(int64_t newMaxLength)
     {
+        if (newMaxLength < 0) {
+            throw std::runtime_error(
+                    "Maximum length must be a non-negative integer");
+        }
+
         maxLength = newMaxLength;
     }
 
