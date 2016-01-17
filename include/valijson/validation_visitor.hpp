@@ -421,8 +421,8 @@ public:
         }
 
         const std::string s = target.asString();
-        const int64_t len = utils::u8_strlen(s.c_str());
-        const int64_t maxLength = constraint.getMaxLength();
+        const uint64_t len = utils::u8_strlen(s.c_str());
+        const uint64_t maxLength = constraint.getMaxLength();
         if (len <= maxLength) {
             return true;
         }
@@ -450,7 +450,7 @@ public:
             return true;
         }
 
-        const int64_t maxProperties = constraint.getMaxProperties();
+        const uint64_t maxProperties = constraint.getMaxProperties();
 
         if (target.asObject().size() <= maxProperties) {
             return true;
@@ -517,7 +517,7 @@ public:
             return true;
         }
 
-        const int64_t minItems = constraint.getMinItems();
+        const uint64_t minItems = constraint.getMinItems();
         if (target.asArray().size() >= minItems) {
             return true;
         }
@@ -544,8 +544,8 @@ public:
         }
 
         const std::string s = target.asString();
-        const int len = utils::u8_strlen(s.c_str());
-        const int64_t minLength = constraint.getMinLength();
+        const uint64_t len = utils::u8_strlen(s.c_str());
+        const uint64_t minLength = constraint.getMinLength();
         if (len >= minLength) {
             return true;
         }
@@ -573,7 +573,7 @@ public:
             return true;
         }
 
-        const int64_t minProperties = constraint.getMinProperties();
+        const uint64_t minProperties = constraint.getMinProperties();
 
         if (target.asObject().size() >= minProperties) {
             return true;
