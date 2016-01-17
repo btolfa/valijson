@@ -46,8 +46,8 @@ public:
                       ValidationResults *results)
       : target(target),
         context(context),
-        strictTypes(strictTypes),
-        results(results) { }
+        results(results),
+        strictTypes(strictTypes) { }
 
     /**
      * @brief  Validate the target against a schema.

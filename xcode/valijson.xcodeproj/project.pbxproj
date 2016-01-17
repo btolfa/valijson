@@ -1225,6 +1225,10 @@
 				LIBRARY_SEARCH_PATHS = /usr/local/lib;
 				PRODUCT_NAME = custom_schema;
 				VALID_ARCHS = x86_64;
+				WARNING_CFLAGS = (
+					"-Wall",
+					"-Werror",
+				);
 			};
 			name = Debug;
 		};
@@ -1239,6 +1243,10 @@
 				LIBRARY_SEARCH_PATHS = /usr/local/lib;
 				PRODUCT_NAME = custom_schema;
 				VALID_ARCHS = x86_64;
+				WARNING_CFLAGS = (
+					"-Wall",
+					"-Werror",
+				);
 			};
 			name = Release;
 		};
@@ -1265,6 +1273,10 @@
 				LIBRARY_SEARCH_PATHS = /usr/local/lib;
 				PRELINK_LIBS = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				WARNING_CFLAGS = (
+					"-Wall",
+					"-Werror",
+				);
 			};
 			name = Debug;
 		};
@@ -1290,6 +1302,10 @@
 				LIBRARY_SEARCH_PATHS = /usr/local/lib;
 				PRELINK_LIBS = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				WARNING_CFLAGS = (
+					"-Wall",
+					"-Werror",
+				);
 			};
 			name = Release;
 		};
@@ -1360,6 +1376,10 @@
 				LIBRARY_SEARCH_PATHS = /usr/local/lib;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				VALID_ARCHS = x86_64;
+				WARNING_CFLAGS = (
+					"-Wall",
+					"-Werror",
+				);
 			};
 			name = Debug;
 		};
@@ -1374,6 +1394,10 @@
 				LIBRARY_SEARCH_PATHS = /usr/local/lib;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				VALID_ARCHS = x86_64;
+				WARNING_CFLAGS = (
+					"-Wall",
+					"-Werror",
+				);
 			};
 			name = Release;
 		};
